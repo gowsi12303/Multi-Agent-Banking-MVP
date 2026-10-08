@@ -186,7 +186,21 @@ Gemini detects the intent of each message; the Supervisor then routes the reques
 
 ## Testing / Validation
 
-The five main use cases have been validated manually through the API (`POST /api/chat`) and currently return successful responses, each reaching the expected specialized agent. There is **no automated test suite** (e.g. pytest) yet.
+The application includes an automated pytest test suite covering the banking tools, specialized agents, supervisor routing, LLM intent handling, and API endpoints.
+
+Test result:
+
+62 passed, 1 warning
+
+The five main banking use cases were also manually validated through the UI and API:
+
+1. Account balance
+2. Recent transactions
+3. Suspicious transaction detection
+4. Loan eligibility
+5. EMI calculation
+
+All five use cases successfully reached the expected specialized agent and returned the expected results.
 
 ## Limitations
 
