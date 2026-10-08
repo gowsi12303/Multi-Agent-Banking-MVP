@@ -1,3 +1,4 @@
+from backend.app.tools.banking_tools import get_credit_profile
 from backend.app.tools.credit_tools import (
     check_loan_eligibility,
     calculate_emi,
@@ -16,9 +17,26 @@ def credit_agent(
     Credit/Loan Agent.
 
     Handles:
+    - Credit profile / credit score
     - Loan eligibility
     - EMI calculation
     """
+
+    if request_type == "credit_profile":
+        if not customer_id:
+            return {
+                "agent": "credit_agent",
+                "status": "ERROR",
+                "message": "Customer ID is required",
+            }
+
+        result = get_credit_profile(customer_id)
+
+        return {
+            "agent": "credit_agent",
+            "status": "SUCCESS",
+            "data": result,
+        }
 
     if request_type == "loan_eligibility":
         if not customer_id or loan_amount is None:

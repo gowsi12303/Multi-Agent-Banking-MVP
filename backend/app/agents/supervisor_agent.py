@@ -16,11 +16,16 @@ def supervisor_agent(
     specialized banking agent.
     """
 
+    # Customer/Banking Agent
     if intent in ["customer_info", "balance", "transactions"]:
         if intent == "customer_info":
-            agent_args = {"customer_id": kwargs.get("customer_id")}
+            agent_args = {
+                "customer_id": kwargs.get("customer_id"),
+            }
         else:
-            agent_args = {"account_id": kwargs.get("account_id")}
+            agent_args = {
+                "account_id": kwargs.get("account_id"),
+            }
 
         result = customer_agent(
             request_type=intent,
@@ -33,6 +38,7 @@ def supervisor_agent(
             "result": result,
         }
 
+    # Risk/Fraud Agent
     if intent == "risk_analysis":
         result = risk_agent(
             kwargs.get("transaction_id"),
@@ -44,16 +50,29 @@ def supervisor_agent(
             "result": result,
         }
 
-    if intent in ["loan_eligibility", "emi"]:
-        if intent == "loan_eligibility":
+    # Credit/Loan Agent
+    if intent in [
+        "credit_profile",
+        "loan_eligibility",
+        "emi",
+    ]:
+        if intent == "credit_profile":
+            agent_args = {
+                "customer_id": kwargs.get("customer_id"),
+            }
+
+        elif intent == "loan_eligibility":
             agent_args = {
                 "customer_id": kwargs.get("customer_id"),
                 "loan_amount": kwargs.get("loan_amount"),
             }
+
         else:
             agent_args = {
                 "principal": kwargs.get("principal"),
-                "annual_interest_rate": kwargs.get("annual_interest_rate"),
+                "annual_interest_rate": kwargs.get(
+                    "annual_interest_rate"
+                ),
                 "tenure_years": kwargs.get("tenure_years"),
             }
 
@@ -68,12 +87,17 @@ def supervisor_agent(
             "result": result,
         }
 
+    # Unsupported / unknown intent
     return {
         "supervisor": "supervisor_agent",
         "selected_agent": None,
         "result": {
             "status": "ERROR",
-            "message": f"Unknown intent: {intent}",
+            "message": (
+                "I can help with customer information, account balance, "
+                "transactions, transaction risk, credit profile, "
+                "loan eligibility, and EMI calculations."
+            ),
         },
     }
 
@@ -104,7 +128,12 @@ def process_user_message(user_message: str, **kwargs):
                 "selected_agent": None,
                 "result": {
                     "status": "ERROR",
-                    "message": "I could not understand the banking request.",
+                    "message": (
+                        "I could not understand the banking request. "
+                        "I can help with customer information, account "
+                        "balance, transactions, transaction risk, "
+                        "credit profile, loan eligibility, and EMI."
+                    ),
                 },
             },
         }
