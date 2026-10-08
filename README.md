@@ -2,22 +2,34 @@
 
 ## Project Overview
 
-An educational, simulated banking application that shows how a multi-agent AI architecture can handle natural-language banking requests. It combines:
+An educational, simulated banking application that demonstrates how a multi-agent AI architecture can handle natural-language banking requests.
 
-- **React** frontend (Vite)
+The application combines:
+
+- **React** frontend with Vite
 - **FastAPI** backend
-- **Gemini** LLM for intent detection
-- **Supervisor/Orchestrator Agent** that routes each request
-- **Customer/Banking Agent**, **Risk/Fraud Agent** and **Credit/Loan Agent**
-- **Simulated banking tools** working on **fictional, in-memory data**
+- **Gemini LLM** for natural-language intent detection
+- **Supervisor/Orchestrator Agent** for intelligent request routing
+- **Customer/Banking Agent**
+- **Risk/Fraud Agent**
+- **Credit/Loan Agent**
+- **Simulated banking tools** operating on fictional, in-memory data
+
+The system demonstrates how an LLM can understand different banking-related requests, select the appropriate specialized agent, execute the required simulated tool, and return the result together with an execution trace.
+
+---
 
 ## Important Disclaimer
 
-- This project is an **educational simulation**.
+This project is an **educational simulation only**.
+
 - It does **not** connect to real banks.
 - It does **not** process real financial transactions.
-- All customer, account, transaction and credit data are **fictional**.
-- It must **not** be used for real financial decisions.
+- All customer, account, transaction, and credit information is **fictional**.
+- Loan and fraud decisions are based on simplified demonstration rules.
+- The application must **not** be used for real financial decisions.
+
+---
 
 ## Architecture
 
@@ -25,110 +37,340 @@ An educational, simulated banking application that shows how a multi-agent AI ar
 flowchart TD
     U[User] --> UI[React UI]
     UI --> API["FastAPI POST /api/chat"]
-    API --> LLM["Gemini LLM - intent detection"]
+    API --> LLM["Gemini LLM - Intent Detection"]
     LLM --> SUP[Supervisor / Orchestrator Agent]
-    SUP --> CA[Customer Agent]
-    SUP --> RA[Risk/Fraud Agent]
-    SUP --> LA[Credit/Loan Agent]
-    CA --> T[Simulated Banking Tools]
-    RA --> T
-    LA --> T
-    T --> D[(Fictional In-Memory Banking Data)]
+
+    SUP --> CA[Customer / Banking Agent]
+    SUP --> RA[Risk / Fraud Agent]
+    SUP --> LA[Credit / Loan Agent]
+
+    CA --> BT[Banking Tools]
+    RA --> RT[Risk Tool]
+    LA --> CT[Credit / Loan Tools]
+
+    BT --> D[(Fictional In-Memory Banking Data)]
+    RT --> D
+    CT --> D
 ```
 
-Flow: the React UI posts the message to `/api/chat`; the backend asks Gemini to classify the intent; the Supervisor selects the specialized agent; the agent calls simulated tools that read the in-memory data; the result is returned to the UI together with the routing trace.
+### Request Flow
 
-## Agent Responsibilities
+```text
+User
+  ↓
+React UI
+  ↓
+FastAPI
+  ↓
+Gemini Intent Detection
+  ↓
+Supervisor / Orchestrator
+  ↓
+Specialized Agent
+  ↓
+Simulated Banking Tool
+  ↓
+Fictional Banking Data
+  ↓
+Result + Agent Execution Trace
+  ↓
+React UI
+```
 
-**Customer/Banking Agent** (`customer_agent`)
+The React frontend sends the user's natural-language message to the FastAPI backend.
+
+The backend uses Gemini to classify the request into a supported intent. The Supervisor then selects the appropriate specialized agent and passes only the parameters required by that agent.
+
+The specialized agent executes the corresponding simulated banking tool and returns the result to the frontend.
+
+---
+
+## Multi-Agent System
+
+### 1. Customer / Banking Agent
+
+Handles general customer and account-related requests.
+
+Responsibilities:
+
 - Customer information
 - Account balance
 - Recent transactions
 
-**Risk/Fraud Agent** (`risk_agent`)
-- Transaction risk analysis
-- Risk score and risk level
-- Fraud indicators (reasons)
+Supported intents:
 
-**Credit/Loan Agent** (`credit_agent`)
+```text
+customer_info
+balance
+transactions
+```
+
+---
+
+### 2. Risk / Fraud Agent
+
+Handles transaction risk analysis.
+
+Responsibilities:
+
+- Suspicious transaction detection
+- Risk score calculation
+- Risk level classification
+- Fraud/risk indicators
+- Flagging potentially suspicious transactions
+
+Supported intent:
+
+```text
+risk_analysis
+```
+
+---
+
+### 3. Credit / Loan Agent
+
+Handles credit and loan-related requests.
+
+Responsibilities:
+
+- Credit profile
+- Credit score
+- Monthly income and existing debt information
 - Loan eligibility
 - EMI calculation
 
-**Supervisor/Orchestrator** (`supervisor_agent`)
+Supported intents:
+
+```text
+credit_profile
+loan_eligibility
+emi
+```
+
+---
+
+### 4. Supervisor / Orchestrator Agent
+
+The Supervisor coordinates the specialized agents.
+
+Responsibilities:
+
 - Receives the detected intent
 - Selects the appropriate specialized agent
-- Passes only the parameters that agent accepts
-- Returns the agent result
+- Passes only the required parameters
+- Prevents unsupported requests from reaching banking tools
+- Returns the selected agent and execution result
 
-## Use Cases
+Unsupported or unclear requests are routed to an `unknown` intent and safely rejected without executing a specialized banking tool.
 
-| Use case | Intent | Agent | Demo values |
+---
+
+## Supported Banking Capabilities
+
+| Use Case | Intent | Agent | Demo Values |
 |---|---|---|---|
 | Account balance | `balance` | Customer Agent | Account `ACC001` |
 | Recent transactions | `transactions` | Customer Agent | Account `ACC001` |
 | Suspicious transaction detection | `risk_analysis` | Risk/Fraud Agent | Transaction `TXN1005` |
-| Loan eligibility | `loan_eligibility` | Credit/Loan Agent | Customer `CUST001`, loan amount 500000 |
-| EMI calculation | `emi` | Credit/Loan Agent | 500000 at 8.5% for 5 years |
+| Credit profile | `credit_profile` | Credit/Loan Agent | Customer `CUST001` |
+| Loan eligibility | `loan_eligibility` | Credit/Loan Agent | Customer `CUST001`, ₹5,00,000 |
+| EMI calculation | `emi` | Credit/Loan Agent | ₹5,00,000 at 8.5% for 5 years |
 
-The supervisor also supports a `customer_info` intent (customer profile, uses `CUST001`). Requests Gemini cannot classify return an `unknown` intent and an error message.
+---
+
+## Natural-Language Interaction
+
+The application is designed to understand different ways of asking the same banking question.
+
+For example:
+
+```text
+"What is my credit score?"
+```
+
+and:
+
+```text
+"Can you show me my credit profile?"
+```
+
+are both classified as:
+
+```text
+credit_profile
+```
+
+Similarly:
+
+```text
+"Can I get a loan of 500000 based on my financial profile?"
+```
+
+is classified as:
+
+```text
+loan_eligibility
+```
+
+And:
+
+```text
+"How much would my monthly EMI be for a ₹5 lakh loan at 8.5% interest for 5 years?"
+```
+
+is classified as:
+
+```text
+emi
+```
+
+The system does not depend on a fixed list of exact user questions. Gemini performs intent detection before the Supervisor routes the request.
+
+---
+
+## Safe Handling of Unsupported Requests
+
+The system intentionally avoids hallucinating unsupported banking capabilities.
+
+For example:
+
+```text
+"Can you transfer ₹20,000 from my account to another account?"
+```
+
+The system returns an `unknown` intent and does not execute a banking tool.
+
+Similarly, unrelated questions such as:
+
+```text
+"What is the weather today?"
+```
+
+are not routed to any banking agent.
+
+Instead, the system provides a safe response listing the supported banking capabilities.
+
+This demonstrates controlled agent routing and prevents unsupported operations from being presented as available functionality.
+
+---
 
 ## Technology Stack
 
-**Backend:** Python, FastAPI, Pydantic, Google GenAI SDK, Gemini Flash Lite (`gemini-flash-lite-latest`)
+### Backend
 
-**Frontend:** React, Vite, JavaScript, CSS
+- Python
+- FastAPI
+- Pydantic
+- Google GenAI SDK
+- Gemini Flash Lite
+- Pytest
+
+### Frontend
+
+- React
+- Vite
+- JavaScript
+- CSS
+
+### AI / Agent Architecture
+
+- Gemini-based intent detection
+- Supervisor / Orchestrator pattern
+- Specialized banking agents
+- Tool-based simulated banking operations
+
+---
 
 ## Project Structure
 
-```
+```text
 Multi-Agent-Banking-MVP/
 ├── backend/
 │   └── app/
-│       ├── main.py            # FastAPI app and endpoints
-│       ├── llm.py             # Gemini intent detection
-│       ├── banking_data.py    # Fictional in-memory data
-│       ├── agents/            # Supervisor, customer, risk and credit agents
-│       └── tools/             # Simulated banking, risk and credit tools
-├── frontend/                  # React + Vite UI
-├── requirements.txt           # Backend dependencies
-├── .env.example               # Environment variable template
+│       ├── main.py              # FastAPI app and API endpoints
+│       ├── llm.py               # Gemini intent detection
+│       ├── banking_data.py      # Fictional in-memory banking data
+│       ├── agents/              # Supervisor and specialized agents
+│       └── tools/               # Simulated banking, risk and credit tools
+│
+├── frontend/                    # React + Vite frontend
+│
+├── tests/                       # Automated backend tests
+│
+├── requirements.txt             # Backend dependencies
+├── .env.example                # Environment variable template
 └── .gitignore
 ```
 
-## Setup Instructions (Windows)
+---
 
-### Backend
+## Setup Instructions
+
+### Prerequisites
+
+- Python 3.10+
+- Node.js
+- npm
+- Gemini API key
+
+### Backend Setup
+
+Clone the repository:
 
 ```powershell
-git clone <YOUR_GITHUB_REPOSITORY_URL>
+git clone https://github.com/gowsi12303/Multi-Agent-Banking-MVP.git
 cd Multi-Agent-Banking-MVP
+```
 
+Create a Python virtual environment:
+
+```powershell
 python -m venv venv
-.\venv\Scripts\Activate.ps1
+```
 
+Activate the environment:
+
+```powershell
+.\venv\Scripts\Activate.ps1
+```
+
+Install backend dependencies:
+
+```powershell
 pip install -r requirements.txt
 ```
 
-Create a `.env` file in the project root (copy `.env.example`) and set your key:
+Create a `.env` file in the project root.
 
-```
-GEMINI_API_KEY=your_actual_key
+Use `.env.example` as the template:
+
+```text
+GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
-Start the backend:
+Start the backend from the project root:
 
 ```powershell
 uvicorn backend.app.main:app --reload
 ```
 
-> **Important:** start the backend from the **project root**, because the code imports modules as `backend.app...`.
+Backend:
 
-- Backend: http://127.0.0.1:8000
-- Swagger UI: http://127.0.0.1:8000/docs
+```text
+http://127.0.0.1:8000
+```
 
-### Frontend
+Swagger UI:
 
-In a second terminal:
+```text
+http://127.0.0.1:8000/docs
+```
+
+> The backend should be started from the project root because the application imports modules using the `backend.app...` package structure.
+
+### Frontend Setup
+
+Open a second terminal:
 
 ```powershell
 cd frontend
@@ -136,19 +378,29 @@ npm install
 npm run dev
 ```
 
-- Frontend: http://localhost:5173
+Frontend:
 
-The Vite dev server proxies `/api` and `/health` to the backend on `127.0.0.1:8000`, so the backend must be running.
+```text
+http://localhost:5173
+```
+
+The Vite development server proxies `/api` and `/health` requests to the FastAPI backend.
+
+Therefore, the backend must be running while using the frontend.
+
+---
 
 ## API Endpoints
 
-| Method | Path | Purpose |
+| Method | Endpoint | Purpose |
 |---|---|---|
-| GET | `/` | Basic status message confirming the app is running |
-| GET | `/health` | Health check, returns `{"status": "ok"}` |
-| POST | `/api/chat` | Main endpoint: takes a message and optional parameters, runs intent detection, supervisor routing and the specialized agent |
+| GET | `/` | Basic application health/status |
+| GET | `/health` | Health check |
+| POST | `/api/chat` | Main natural-language banking endpoint |
 
-`POST /api/chat` request body:
+### POST `/api/chat`
+
+Example request:
 
 ```json
 {
@@ -163,67 +415,234 @@ The Vite dev server proxies `/api` and `/health` to the backend on `127.0.0.1:80
 }
 ```
 
-Only `message` is required. The response contains `user_message`, the detected `intent` (with `confidence`) and `routing` (supervisor, selected agent and agent result).
+Only `message` is required.
+
+Optional fields provide the simulated demo context used by the frontend and specialized tools.
+
+The response contains:
+
+- User message
+- Detected intent
+- Intent confidence
+- Supervisor routing
+- Selected specialized agent
+- Agent status
+- Tool result
+
+---
 
 ## Example Natural-Language Prompts
 
-- "What is my account balance?"
-- "Show my recent transactions"
-- "Is transaction TXN1005 suspicious?"
-- "Am I eligible for a loan of 500000?"
-- "Calculate EMI for 500000 at 8.5% for 5 years"
+### Customer / Banking
 
-Gemini detects the intent of each message; the Supervisor then routes the request to the matching specialized agent. There is no keyword routing in the API layer. The frontend supplies the demo IDs and extracts simple numeric values (amount, rate, years) from the text, falling back to the demo defaults.
+```text
+What is my account balance?
+```
 
-## Demo Flow (5–10 minutes)
+```text
+Can you show me my recent transactions?
+```
 
-1. Start the backend and the frontend.
-2. Open http://localhost:5173 and show the UI.
-3. Run the five use cases, using the suggested prompts or the examples above.
-4. For each one, open the **Agent execution trace** panel.
-5. Explain the flow: Gemini intent detection → Supervisor → specialized agent → simulated tool.
-6. Close by repeating the disclaimer: all data is simulated.
+```text
+Who am I?
+```
 
-## Testing / Validation
+### Risk / Fraud
 
-The application includes an automated pytest test suite covering the banking tools, specialized agents, supervisor routing, LLM intent handling, and API endpoints.
+```text
+Is transaction TXN1005 suspicious?
+```
 
-Test result:
+```text
+I noticed a large international transaction. Can you check if it looks suspicious?
+```
 
+### Credit Profile
+
+```text
+What is my credit score?
+```
+
+```text
+Can you show me my credit profile?
+```
+
+### Loan Eligibility
+
+```text
+Am I eligible for a loan of 500000?
+```
+
+```text
+Can I get a loan of 500000 based on my financial profile?
+```
+
+### EMI
+
+```text
+Calculate EMI for 500000 at 8.5% for 5 years.
+```
+
+```text
+How much would my monthly EMI be for a ₹5 lakh loan at 8.5% interest for 5 years?
+```
+
+Gemini detects the intent from the natural-language request and the Supervisor routes it to the corresponding specialized agent.
+
+---
+
+## Demo Flow
+
+The recommended demo duration is approximately **5–10 minutes**.
+
+1. Start the FastAPI backend.
+2. Start the React frontend.
+3. Open the Banking AI interface.
+4. Introduce the multi-agent architecture.
+5. Demonstrate account balance.
+6. Demonstrate recent transactions.
+7. Demonstrate suspicious transaction detection.
+8. Demonstrate credit profile / credit score.
+9. Demonstrate loan eligibility.
+10. Demonstrate EMI calculation.
+11. Show the **Agent Execution Trace** after each request.
+12. Demonstrate an unsupported request such as a money transfer.
+13. Demonstrate an unrelated request such as a weather question.
+14. Explain that unsupported requests are safely rejected.
+15. Close with the educational simulation disclaimer.
+
+### Execution Trace
+
+The UI shows:
+
+```text
+Gemini Intent Detection
+        ↓
+Supervisor Agent
+        ↓
+Specialized Agent
+        ↓
+Tool / Result
+```
+
+This makes the multi-agent decision flow visible during the demo.
+
+---
+
+## Testing and Validation
+
+The project includes an automated pytest test suite covering:
+
+- Banking tools
+- Risk tools
+- Credit tools
+- Customer Agent
+- Risk/Fraud Agent
+- Credit/Loan Agent
+- Supervisor routing
+- LLM intent handling
+- API endpoints
+- Unknown intent handling
+
+### Backend Test Result
+
+```text
 62 passed, 1 warning
+```
 
-The five main banking use cases were also manually validated through the UI and API:
+The warning comes from a third-party `google-genai` dependency and does not represent an application test failure.
 
-1. Account balance
-2. Recent transactions
-3. Suspicious transaction detection
-4. Loan eligibility
-5. EMI calculation
+### Frontend Validation
 
-All five use cases successfully reached the expected specialized agent and returned the expected results.
+Lint:
+
+```powershell
+npm run lint
+```
+
+Passed successfully.
+
+Production build:
+
+```powershell
+npm run build
+```
+
+Passed successfully.
+
+### Manual Validation
+
+The following natural-language scenarios were validated through the UI:
+
+- Account balance
+- Recent transactions
+- Suspicious transaction detection
+- Credit score
+- Credit profile
+- Loan eligibility
+- EMI calculation
+- Unsupported transfer request
+- Unrelated non-banking request
+
+All supported use cases reached the expected specialized agent and returned the expected simulated results.
+
+Unsupported and unrelated requests were safely routed to `unknown` without executing a specialized banking tool.
+
+---
 
 ## Limitations
 
 - No real bank integration
+- No real financial transactions
 - No authentication or authorization
 - Fictional in-memory data
 - No persistent database
 - Simplified loan eligibility rules
 - Simplified fraud/risk rules
-- Depends on the Gemini API (network, key and quota)
-- No production security or rate limiting
+- Simplified credit profile data
+- Depends on Gemini API availability, network access, API key and quota
+- No production-grade security
+- No rate limiting
+- Not suitable for real financial decisions
+
+---
 
 ## Future Improvements
 
+Potential future improvements include:
+
 - Authentication and authorization
-- Database persistence (e.g. PostgreSQL)
-- Real banking API adapters in a controlled environment
-- Better fraud detection models
+- Database persistence using PostgreSQL
+- Controlled banking API adapters
+- More advanced fraud detection models
 - More advanced credit scoring
-- Automated test suite
-- Observability and logging
+- Improved parameter extraction for complex financial requests
+- Observability and structured logging
 - Rate limiting
 - Production deployment
+- Additional banking agents and tools
+- More comprehensive end-to-end testing
+
+---
+
+## Educational Purpose
+
+This project was created as a learning and portfolio project to demonstrate:
+
+- Multi-agent AI architecture
+- LLM-based intent detection
+- Supervisor/orchestrator patterns
+- Specialized AI agents
+- Tool-based agent execution
+- Natural-language interfaces
+- API integration
+- React and FastAPI development
+- Automated testing
+- Safe handling of unsupported requests
+
+All banking information in this project is fictional and simulated.
+
+---
 
 ## License
 
